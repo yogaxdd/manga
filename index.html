@@ -4,486 +4,73 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Jikan Manga Finder</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      --bg:#0b0d10; --card:#12151a; --muted:#9aa4b2; --text:#e8eef6; --accent:#59a5ff; --accent-2:#7cf7d4;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial,'Noto Sans',sans-serif;background:linear-gradient(180deg,#0b0d10 0%,#10141a 100%);color:var(--text)}
-    .container{max-width:1100px;margin:0 auto;padding:22px}
-    header{position:sticky;top:0;background:rgba(11,13,16,.75);backdrop-filter:blur(8px);z-index:10;border-bottom:1px solid #1d232d}
-    header .wrap{display:flex;gap:12px;align-items:center;max-width:1100px;margin:0 auto;padding:14px 22px}
-    .logo{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.3px}
-    .logo-badge{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:grid;place-items:center;color:#0b0d10;font-weight:800}
-    .searchbar{flex:1;display:flex;gap:10px}
-    .input{flex:1;background:#0f1217;border:1px solid #1f2631;border-radius:12px;padding:12px 14px;color:var(--text);outline:none}
-    .btn{border:1px solid #1f2631;background:#12151a;color:var(--text);padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer}
-    .btn:hover{border-color:#2a3342}
-    .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#0b0d10;border-color:transparent}
-    .hint{font-size:12px;color:var(--muted)}
-
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
-    .card{background:linear-gradient(180deg,#12151a 0%,#0e1116 100%);border:1px solid #1d232d;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;transition:.25s transform,.25s box-shadow}
-    .card:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(0,0,0,.25)}
-    .cover{width:100%;aspect-ratio:3/4;object-fit:cover;background:#0b0d10}
-    .card-body{padding:12px 12px 14px;display:flex;flex-direction:column;gap:8px}
-    .title{font-weight:700;font-size:14px;line-height:1.2}
-    .meta{display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
-    .tag{border:1px solid #273042;border-radius:999px;padding:2px 8px}
-
-    .toolbar{display:flex;align-items:center;justify-content:space-between;margin:18px 0 12px}
-    .tabs{display:flex;gap:8px;flex-wrap:wrap}
-
-    .empty{border:1px dashed #273042;border-radius:16px;padding:26px;text-align:center;color:var(--muted)}
-
-    .footer{opacity:.7;text-align:center;font-size:12px;margin:26px 0}
-
-    .pagination{display:flex;gap:8px;justify-content:center;margin:18px 0}
-    .pagination .btn{padding:8px 12px}
-
-    dialog{border:none;border-radius:16px;max-width:960px;width:96vw;background:#0e1218;color:var(--text);padding:0;overflow:hidden}
-    dialog::backdrop{background:rgba(0,0,0,.55)}
-    .modal-head{display:flex;gap:14px;padding:16px;border-bottom:1px solid #1d232d;align-items:center}
-    .modal-head .cover{width:120px;aspect-ratio:3/4;border-radius:10px}
-    .modal-title{font-size:18px;font-weight:800}
-    .modal-body{padding:16px;display:grid;grid-template-columns:1.5fr .9fr;gap:16px}
-    .kv{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;font-size:13px}
-    .kv .k{color:var(--muted)}
-    .chips{display:flex;gap:6px;flex-wrap:wrap}
-    .chip{background:#12151a;border:1px solid #273042;border-radius:999px;padding:3px 8px;font-size:12px}
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace; font-size:12px; color:var(--muted)}
-
-    @media (max-width:880px){
-      .modal-body{grid-template-columns:1fr}
-      .modal-head{align-items:flex-start}
-    }
-
-    /* Reader */
-    #reader .head{display:flex;gap:10px;align-items:center;padding:12px 16px;border-bottom:1px solid #1d232d}
-    #reader .title{font-weight:800}
-    #reader .pages{padding:10px 16px;max-height:75vh;overflow:auto;display:flex;flex-direction:column;gap:12px;background:#0b0f15}
-    #reader img{width:100%;height:auto;border-radius:8px;background:#0b0d10}
-    #reader .bar{display:flex;gap:8px;align-items:center;margin-left:auto}
-
-    /* Test result styles */
-    .tests{margin-top:14px}
-    .test-log{margin-top:8px;border:1px solid #273042;border-radius:12px;padding:10px;font-size:12px;color:#9aa4b2}
-    .ok{color:#79e6a1}
-    .fail{color:#ff8383}
-  </style>
+  <style>body{margin:0;font-family:sans-serif;background:#0b0d10;color:#e8eef6}.card{background:#12151a;border:1px solid #1d232d;border-radius:12px;padding:8px;cursor:pointer}.cover{width:100%;aspect-ratio:3/4;object-fit:cover}</style>
 </head>
 <body>
-  <header>
-    <div class="wrap">
-      <div class="logo">
-        <div class="logo-badge">JM</div>
-        <div>Jikan Manga Finder</div>
-      </div>
-      <div class="searchbar">
-        <input id="q" class="input" placeholder="Cari manga… (contoh: One Piece)" />
-        <button id="btnSearch" class="btn">Search</button>
-        <button id="btnTop" class="btn primary">Top Manga</button>
-      </div>
-    </div>
-  </header>
-
-  <div class="container">
-    <div class="toolbar">
-      <div class="hint">Tip: ketik lalu tekan <b>Enter</b>. Klik kartu buat lihat detail.</div>
-      <div class="tabs">
-        <select id="sfw" class="btn" title="Safe For Work filter">
-          <option value="true" selected>SFW: On</option>
-          <option value="false">SFW: Off</option>
-        </select>
-        <select id="order" class="btn" title="Urutkan">
-          <option value="score">Sort: Score</option>
-          <option value="popularity">Popularity</option>
-          <option value="members">Members</option>
-          <option value="rank">Rank</option>
-          <option value="favorites">Favorites</option>
-        </select>
-        <button id="btnRunTests" class="btn" title="Jalankan self-test non-network">Run Self Tests</button>
-      </div>
-    </div>
-
-    <div id="results" class="grid"></div>
-    <div id="empty" class="empty" style="display:none">Belum ada hasil. Coba cari judul manga atau klik <b>Top Manga</b>.</div>
-
-    <div class="pagination" id="pager" style="display:none">
-      <button class="btn" id="prev">‹ Prev</button>
-      <span class="mono" id="pageinfo"></span>
-      <button class="btn" id="next">Next ›</button>
-    </div>
-
-    <div class="tests" id="tests" style="display:none">
-      <div class="hint"><b>Self Tests</b> (tidak memanggil jaringan):</div>
-      <div id="testlog" class="test-log" aria-live="polite"></div>
-    </div>
-
-    <div class="footer">Data by <a href="https://docs.api.jikan.moe/" target="_blank" rel="noreferrer">Jikan (Unofficial MyAnimeList API)</a> · Reading via <a href="https://api.mangadex.org/docs/" target="_blank" rel="noreferrer">MangaDex API</a></div>
-  </div>
-
-  <dialog id="modal">
-    <div class="modal-head">
-      <img id="mCover" class="cover" alt="cover" />
-      <div>
-        <div class="modal-title" id="mTitle">Title</div>
-        <div class="mono" id="mAltTitle"></div>
-        <div class="chips" id="mChips"></div>
-      </div>
-      <div class="bar" style="margin-left:auto;display:flex;gap:8px;align-items:center">
-        <button id="btnReadMD" class="btn">Baca (MangaDex)</button>
-        <button id="closeModal" class="btn">Close</button>
-      </div>
-    </div>
-    <div class="modal-body">
-      <div>
-        <p id="mSynopsis" style="margin-top:0;white-space:pre-wrap"></p>
-      </div>
-      <div>
-        <div class="kv" id="mKV"></div>
-      </div>
-    </div>
-  </dialog>
-
-  <!-- Reader Modal -->
-  <dialog id="reader">
-    <div class="head">
-      <div class="title" id="rTitle">Reader</div>
-      <select id="rLang" class="btn" title="Bahasa">
-        <option value="id">ID</option>
-        <option value="en" selected>EN</option>
-      </select>
-      <select id="rChapter" class="btn" title="Chapter"></select>
-      <div class="bar">
-        <button id="rPrev" class="btn">‹ Prev</button>
-        <span class="mono" id="rInfo"></span>
-        <button id="rNext" class="btn">Next ›</button>
-        <button id="rClose" class="btn">Close</button>
-      </div>
-    </div>
-    <div class="pages" id="rPages"></div>
-  </dialog>
+  <h2 style="padding:1rem">Jikan Manga Finder + MangaDex Reader</h2>
+  <div id="results"></div>
+  <dialog id="reader"><div id="pages"></div><button onclick="this.parentElement.close()">Close</button></dialog>
 
   <script>
-    // Helper selectors
-    const el = sel => document.querySelector(sel);
-    const results = el('#results');
-    const empty = el('#empty');
-    const pager = el('#pager');
-    const pageinfo = el('#pageinfo');
-    const q = el('#q');
+    const results=document.getElementById("results");
+    const reader=document.getElementById("reader");
+    const pages=document.getElementById("pages");
 
-    // App state
-    let state = { mode: 'top', page: 1, lastQuery: '', lastResp: null, lastDetail: null, reader: { mangaId: null, chapters: [], pages: [], chapterIndex: 0 } };
-
-    // Basic fetch wrapper with retry/backoff
-    async function jikan(url, opts={}){
-      const maxRetry = 3; let attempt = 0; let lastErr;
-      while(attempt < maxRetry){
-        try{
-          const c = new AbortController();
-          const t = setTimeout(()=>c.abort(), 12000);
-          const res = await fetch(url, {signal:c.signal, ...opts});
-          clearTimeout(t);
-          if(res.status === 429){
-            const ra = parseInt(res.headers.get('Retry-After')||'1',10);
-            await new Promise(r=>setTimeout(r, Math.min(ra*1000, 3000)));
-            attempt++; continue;
-          }
-          if(!res.ok) throw new Error('HTTP '+res.status);
-          return await res.json();
-        }catch(e){ lastErr = e; attempt++; await new Promise(r=>setTimeout(r, 400*attempt)); }
-      }
-      throw lastErr;
+    async function jikanTop(){
+      const res=await fetch("https://api.jikan.moe/v4/top/manga?page=1");
+      const data=await res.json();
+      results.innerHTML="";
+      data.data.forEach(m=>{
+        const d=document.createElement("div");
+        d.className="card";
+        d.innerHTML=`<img class=cover src="${m.images.jpg.image_url}"/><div>${m.title}</div>`;
+        d.onclick=()=>openReader(m.title);
+        results.appendChild(d);
+      });
     }
 
-    // MangaDex helpers via serverless proxy to avoid CORS
     async function mdGet(url){
-      const proxyUrl = `/api/mangadex?u=${encodeURIComponent(url)}`;
-      const res = await fetch(proxyUrl, { headers: { 'Accept': 'application/json' } });
-      if(!res.ok) throw new Error('HTTP '+res.status);
+      const res=await fetch("/api/mangadex?u="+encodeURIComponent(url));
+      if(!res.ok) throw new Error("HTTP "+res.status);
       return res.json();
     }
 
-    async function mdSearchMangaByTitle(title){
-      const q = encodeURIComponent(title);
-      const url = `https://api.mangadex.org/manga?title=${q}&limit=5&order[relevance]=desc`;
-      const data = await mdGet(url);
-      return data.data || [];
+    async function mdSearch(title){
+      const url=`https://api.mangadex.org/manga?title=${encodeURIComponent(title)}&limit=1`;
+      const d=await mdGet(url); return d.data[0];
     }
 
-    function normalizeTitles(m){
-      const t = new Set();
-      const at = m?.attributes?.altTitles || [];
-      if(m?.attributes?.title){ Object.values(m.attributes.title).forEach(v=>v && t.add(v.toLowerCase())); }
-      at.forEach(obj=> Object.values(obj).forEach(v=> v && t.add(v.toLowerCase())) );
-      return t;
+    async function mdChapters(mangaId){
+      const url=`https://api.mangadex.org/chapter?manga=${mangaId}&limit=1&translatedLanguage[]=en&order[chapter]=asc`;
+      const d=await mdGet(url); return d.data[0];
     }
 
-    async function mdGetChapters(mangaId, lang){
-      const url = `https://api.mangadex.org/chapter?manga=${mangaId}&translatedLanguage[]=${lang}&limit=100&order[chapter]=asc`;
-      const data = await mdGet(url);
-      return data.data || [];
+    async function mdChapterDetail(id){ return (await mdGet(`https://api.mangadex.org/chapter/${id}`)).data; }
+    async function mdAtHome(id){ return await mdGet(`https://api.mangadex.org/at-home/server/${id}`); }
+
+    async function buildPageUrls(chId){
+      const [detail, home]=await Promise.all([mdChapterDetail(chId), mdAtHome(chId)]);
+      const hash=detail.attributes.hash;
+      let files=[];
+      if(detail.attributes.dataSaver && detail.attributes.dataSaver.length){ files=detail.attributes.dataSaver; }
+      else if(detail.attributes.data && detail.attributes.data.length){ files=detail.attributes.data; }
+      else throw new Error("No page files");
+      const base=home.baseUrl+(files===detail.attributes.dataSaver?"/data-saver/":"/data/");
+      return files.map(f=>base+hash+"/"+f);
     }
 
-    async function mdChapterDetail(chId){
-      const data = await mdGet(`https://api.mangadex.org/chapter/${chId}`);
-      return data.data;
-    }
-
-    async function mdAtHome(chId){
-      const data = await mdGet(`https://api.mangadex.org/at-home/server/${chId}`);
-      return data;
-    }
-
-    async function buildPageUrls(chId, useSaver=true){
-      const [detail, home] = await Promise.all([mdChapterDetail(chId), mdAtHome(chId)]);
-      const hash = detail.attributes.hash;
-      const files = useSaver ? detail.attributes.dataSaver : detail.attributes.data;
-      const base = home.baseUrl + (useSaver? '/data-saver/':'/data/');
-      return files.map(f=> base + hash + '/' + f);
-    }
-
-    // UI components
-    function card(m){
-      const img = m.images?.jpg?.image_url || m.images?.webp?.image_url || '';
-      const title = m.title || m.title_english || m.title_japanese || 'Untitled';
-      const year = m.published?.prop?.from?.year || (m.year ?? '');
-      const score = m.score ?? '—';
-      const type = m.type ?? '';
-      const genres = (m.genres||[]).map(g=>g.name).slice(0,2).join(', ');
-
-      const div = document.createElement('div');
-      div.className = 'card';
-      div.setAttribute('data-testid','card');
-      div.innerHTML = `
-        <img class="cover" src="${img}" alt="${title}" loading="lazy"/>
-        <div class="card-body">
-          <div class="title" title="${title}">${title}</div>
-          <div class="meta">
-            <span class="tag">⭐ ${score}</span>
-            ${type?`<span class="tag">${type}</span>`:''}
-            ${year?`<span class="tag">${year}</span>`:''}
-          </div>
-          ${genres?`<div class="hint">${genres}</div>`:''}
-        </div>`;
-      div.addEventListener('click', ()=> openDetail(m.mal_id));
-      return div;
-    }
-
-    function renderList(payload){
-      const items = payload?.data || [];
-      state.lastResp = payload;
-      results.innerHTML = '';
-      if(items.length===0){ empty.style.display='block'; pager.style.display='none'; return; }
-      empty.style.display='none';
-      items.forEach(m=> results.appendChild(card(m)) );
-
-      const { current_page, last_page } = payload?.pagination || {};
-      if(current_page && last_page){
-        pager.style.display = 'flex';
-        pageinfo.textContent = `Page ${current_page} / ${last_page}`;
-        el('#prev').disabled = current_page<=1;
-        el('#next').disabled = current_page>=last_page;
-      } else {
-        pager.style.display='none';
-      }
-    }
-
-    async function search(page=1){
-      state.mode='search'; state.page=page; const sfw = el('#sfw').value; const order = el('#order').value;
-      const url = new URL('https://api.jikan.moe/v4/manga');
-      url.searchParams.set('q', state.lastQuery.trim());
-      url.searchParams.set('sfw', sfw);
-      url.searchParams.set('page', page);
-      url.searchParams.set('order_by', order);
-      url.searchParams.set('sort', 'desc');
-      renderList({data:[],pagination:null}); // clear
-      try{ const data = await jikan(url.toString()); renderList(data);}catch(e){ showEmptyErr(e); }
-    }
-
-    async function fetchTopManga(page=1){
-      state.mode='top'; state.page=page; const sfw = el('#sfw').value; const order = el('#order').value;
-      const url = new URL('https://api.jikan.moe/v4/top/manga');
-      url.searchParams.set('page', page);
-      if(order) url.searchParams.set('filter', 'bypopularity');
-      if(sfw==='true') url.searchParams.set('sfw', 'true');
-      renderList({data:[],pagination:null});
-      try{ const data = await jikan(url.toString()); renderList(data);}catch(e){ showEmptyErr(e); }
-    }
-
-    function showEmptyErr(e){
-      empty.style.display='block';
-      empty.innerHTML = `Gagal ambil data. <span class="mono">${e?.message||e}</span>`;
-      pager.style.display='none';
-    }
-
-    async function openDetail(id){
+    async function openReader(title){
       try{
-        const data = await jikan(`https://api.jikan.moe/v4/manga/${id}/full`);
-        const m = data?.data; state.lastDetail = m;
-        const img = m.images?.jpg?.large_image_url || m.images?.webp?.large_image_url || '';
-        el('#mCover').src = img; el('#mTitle').textContent = m.title || 'Untitled';
-        el('#mAltTitle').textContent = [m.title_english, m.title_japanese].filter(Boolean).join(' • ');
-        el('#mSynopsis').textContent = m.synopsis || '—';
-        const chips = el('#mChips'); chips.innerHTML = '';
-        [...(m.genres||[]), ...(m.themes||[]), ...(m.demographics||[])].slice(0,10).forEach(g=>{
-          const c=document.createElement('span'); c.className='chip'; c.textContent=g.name; chips.appendChild(c);
-        });
-        const kv = el('#mKV'); kv.innerHTML='';
-        kv.appendChild(kvrow('Type', m.type||'—'));
-        kv.appendChild(kvrow('Chapters', m.chapters ?? '—'));
-        kv.appendChild(kvrow('Volumes', m.volumes ?? '—'));
-        kv.appendChild(kvrow('Score', m.score ?? '—'));
-        kv.appendChild(kvrow('Rank', m.rank ?? '—'));
-        kv.appendChild(kvrow('Popularity', m.popularity ?? '—'));
-        kv.appendChild(kvrow('Members', m.members ?? '—'));
-        kv.appendChild(kvrow('Status', m.status ?? '—'));
-        kv.appendChild(kvrow('Published', m.published?.string || '—'));
-        kv.appendChild(kvrow('Authors', (m.authors||[]).map(a=>a.name).join(', ')||'—'));
-        if(m.serializations?.length){ kv.appendChild(kvrow('Serialization', m.serializations.map(s=>s.name).join(', '))); }
-        if(m.external?.length){
-          const links = document.createElement('span');
-          links.innerHTML = m.external.map(e=>`<a href="${e.url}" target="_blank" rel="noreferrer">${e.name}</a>`).join(' · ');
-          kv.appendChild(kvrow('External', links));
-        }
-        el('#modal').showModal();
-      }catch(e){ alert('Gagal ambil detail: '+e.message); }
+        const m=await mdSearch(title);
+        const ch=await mdChapters(m.id);
+        const urls=await buildPageUrls(ch.id);
+        pages.innerHTML="";
+        urls.forEach(u=>{const im=document.createElement("img"); im.src=u; im.style.width="100%"; im.loading="lazy"; pages.appendChild(im);});
+        reader.showModal();
+      }catch(e){alert("Gagal buka reader: "+e.message)}
     }
 
-    function kvrow(k, v){
-      const key = document.createElement('div'); key.className='k'; key.textContent=k; const val=document.createElement('div');
-      if(typeof v==='string' || typeof v==='number') val.textContent=v; else val.appendChild(v);
-      const frag=document.createDocumentFragment(); frag.appendChild(key); frag.appendChild(val); return frag;
-    }
-
-    // ======== Reader Logic (MangaDex) =========
-    async function startReadingFromDetail(){
-      const m = state.lastDetail; if(!m) return;
-      const queryTitles = [m.title, m.title_english, m.title_japanese].filter(Boolean);
-      let found = [];
-      for(const t of queryTitles){ if(!t) continue; try{ const r = await mdSearchMangaByTitle(t); if(r.length) { found = r; break; } } catch(_){} }
-      if(!found.length){ alert('Tidak ditemukan di MangaDex. Coba judul lain atau bahasa lain.'); return; }
-
-      const wanted = (m.title||'').toLowerCase();
-      let pick = found[0];
-      for(const cand of found){
-        const titles = normalizeTitles(cand);
-        if(titles.has(wanted)) { pick = cand; break; }
-      }
-      state.reader.mangaId = pick.id;
-      el('#rTitle').textContent = (pick.attributes?.title?.en || pick.attributes?.title?.ja || Object.values(pick.attributes?.title||{})[0] || 'Reader');
-
-      await loadChaptersAndOpen();
-    }
-
-    async function loadChaptersAndOpen(){
-      const lang = el('#rLang').value;
-      const chs = await mdGetChapters(state.reader.mangaId, lang);
-      if(!chs.length){
-        const alt = lang==='en' ? 'id' : 'en';
-        const chsAlt = await mdGetChapters(state.reader.mangaId, alt);
-        if(!chsAlt.length){ alert('Chapter tidak tersedia untuk bahasa ID/EN.'); return; }
-        el('#rLang').value = alt; state.reader.chapters = chsAlt;
-      } else {
-        state.reader.chapters = chs;
-      }
-
-      const dd = el('#rChapter'); dd.innerHTML='';
-      state.reader.chapters.forEach((c,idx)=>{
-        const num = c.attributes.chapter || `?`;
-        const title = c.attributes.title || '';
-        const opt = document.createElement('option');
-        opt.value = String(idx); opt.textContent = `Ch ${num}${title? ' · '+title:''}`;
-        dd.appendChild(opt);
-      });
-      state.reader.chapterIndex = 0; dd.value = '0';
-      await openReaderForIndex(0);
-      el('#reader').showModal();
-    }
-
-    async function openReaderForIndex(idx){
-      state.reader.chapterIndex = idx;
-      const ch = state.reader.chapters[idx];
-      const pagesBox = el('#rPages'); pagesBox.innerHTML = '<div class="hint">Loading pages…</div>';
-      try{
-        const urls = await buildPageUrls(ch.id, true);
-        state.reader.pages = urls;
-        pagesBox.innerHTML = '';
-        urls.forEach((u,i)=>{
-          const im = document.createElement('img');
-          im.loading = 'lazy'; im.alt = `Page ${i+1}`; im.src = u;
-          pagesBox.appendChild(im);
-        });
-        el('#rInfo').textContent = `Chapter ${ch.attributes.chapter || '?'} · ${urls.length} pages`;
-      }catch(e){ pagesBox.innerHTML = `<div class="hint">Gagal load pages: <span class="mono">${e.message}</span></div>`; }
-    }
-
-    // Events
-    el('#btnTop').addEventListener('click', ()=> fetchTopManga(1));
-    el('#btnSearch').addEventListener('click', ()=>{ state.lastQuery=q.value; if(state.lastQuery.trim()) search(1); else fetchTopManga(1); });
-    q.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ state.lastQuery=q.value; if(state.lastQuery.trim()) search(1); else fetchTopManga(1);} });
-    el('#prev').addEventListener('click', ()=>{ if(state.page>1){ if(state.mode==='top') fetchTopManga(state.page-1); else search(state.page-1);} });
-    el('#next').addEventListener('click', ()=>{
-      const last = state.lastResp?.pagination?.last_page || Infinity;
-      if(state.page<last){ if(state.mode==='top') fetchTopManga(state.page+1); else search(state.page+1);} });
-    el('#sfw').addEventListener('change', ()=>{ if(state.mode==='top') fetchTopManga(1); else if(state.lastQuery) search(1); });
-    el('#order').addEventListener('change', ()=>{ if(state.mode==='top') fetchTopManga(1); else if(state.lastQuery) search(1); });
-    el('#closeModal').addEventListener('click', ()=> el('#modal').close());
-
-    // Reader events
-    el('#btnReadMD').addEventListener('click', startReadingFromDetail);
-    el('#rLang').addEventListener('change', loadChaptersAndOpen);
-    el('#rChapter').addEventListener('change', (e)=> openReaderForIndex(parseInt(e.target.value,10)||0));
-    el('#rClose').addEventListener('click', ()=> el('#reader').close());
-    el('#rPrev').addEventListener('click', ()=>{ const i = state.reader.chapterIndex; if(i>0){ el('#rChapter').value = String(i-1); openReaderForIndex(i-1);} });
-    el('#rNext').addEventListener('click', ()=>{ const i = state.reader.chapterIndex; if(i < state.reader.chapters.length-1){ el('#rChapter').value = String(i+1); openReaderForIndex(i+1);} });
-
-    // --- Simple Self Tests (no network) ---
-    function runSelfTests(){
-      const box = el('#tests'); const log = el('#testlog'); box.style.display='block'; log.innerHTML='';
-      const results=[]; const ok=(n)=>results.push({n,ok:true}); const fail=(n,m)=>results.push({n,ok:false,m});
-
-      try { typeof fetchTopManga==='function' ? ok('Function renamed: fetchTopManga exists') : fail('Function renamed','fetchTopManga not found'); } catch(e){ fail('Function renamed', e.message); }
-
-      try {
-        const frag = kvrow('Key','Val');
-        (frag && frag.childNodes && frag.childNodes.length===2) ? ok('kvrow returns 2 nodes') : fail('kvrow','Unexpected child count');
-      } catch(e){ fail('kvrow', e.message); }
-
-      try {
-        const sample = { images:{jpg:{image_url:''}}, title:'Sample', score:8.5, genres:[{name:'Action'}], mal_id:1 };
-        const c = card(sample);
-        (c && c.classList.contains('card')) ? ok('card() returns .card element') : fail('card','No .card class');
-      } catch(e){ fail('card', e.message); }
-
-      try {
-        renderList({data:[], pagination:{current_page:1,last_page:1}});
-        (empty.style.display==='block') ? ok('renderList shows empty on no data') : fail('renderList','empty not visible');
-      } catch(e){ fail('renderList', e.message); }
-
-      try { typeof startReadingFromDetail==='function' ? ok('Reader: startReadingFromDetail exists') : fail('Reader fn','missing'); } catch(e){ fail('Reader fn', e.message); }
-
-      for(const r of results){
-        const line = document.createElement('div');
-        line.innerHTML = r.ok ? `✅ <span class="ok">${r.n}</span>` : `❌ <span class="fail">${r.n}</span> — ${r.m||''}`;
-        log.appendChild(line);
-      }
-
-      if(results.every(r=>r.ok)){
-        const done = document.createElement('div'); done.style.marginTop='6px'; done.innerHTML = 'All self tests passed.'; log.appendChild(done);
-      }
-    }
-
-    el('#btnRunTests').addEventListener('click', runSelfTests);
-
-    // Initial load
-    fetchTopManga(1);
+    jikanTop();
   </script>
 </body>
 </html>
