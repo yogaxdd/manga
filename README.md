@@ -1,1 +1,1 @@
-Deploy ke Vercel, semua request MangaDex lewat proxy.
+MangaDex-only Reader. Deploy to Vercel. All MD calls via /api/mangadex.

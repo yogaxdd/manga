@@ -3,48 +3,51 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Jikan Manga Finder + MangaDex Reader</title>
+  <title>MangaDex Reader (No Jikan)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root{--bg:#0b0d10;--text:#e8eef6;--muted:#9aa4b2;--card:#12151a;--line:#1d232d;--accent:#59a5ff}
     *{box-sizing:border-box}
-    body{margin:0;background:#0b0d10;color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,"Noto Sans",sans-serif}
+    body{margin:0;background:#0b0d10;color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial,'Noto Sans',sans-serif}
     header{position:sticky;top:0;background:#0b0d10cc;border-bottom:1px solid var(--line);backdrop-filter:blur(8px)}
-    .wrap{max-width:1024px;margin:0 auto;padding:14px 18px;display:flex;gap:10px;align-items:center}
+    .wrap{max-width:1080px;margin:0 auto;padding:14px 18px;display:flex;gap:10px;align-items:center}
     .logo{font-weight:800}
     .input{flex:1;background:#0f1217;border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--text);outline:none}
     .btn{background:#12151a;border:1px solid var(--line);color:var(--text);padding:10px 12px;border-radius:10px;font-weight:600;cursor:pointer}
     .btn.primary{background:linear-gradient(135deg,var(--accent),#7cf7d4);color:#0b0d10;border-color:transparent}
-    .container{max-width:1024px;margin:0 auto;padding:18px}
+    .container{max-width:1080px;margin:0 auto;padding:18px}
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column}
     .cover{width:100%;aspect-ratio:3/4;object-fit:cover;background:#0b0d10}
     .title{padding:8px 10px 12px;font-weight:700;font-size:14px}
     .hint{color:var(--muted);font-size:12px}
     .pagination{display:flex;gap:8px;justify-content:center;margin-top:14px}
     dialog{border:none;border-radius:16px;max-width:960px;width:96vw;background:#0e1218;color:var(--text);padding:0;overflow:hidden}
     dialog::backdrop{background:rgba(0,0,0,.55)}
-    .modal-head{display:flex;gap:14px;padding:14px;border-bottom:1px solid var(--line);align-items:center}
-    .modal-body{padding:14px}
     #reader .head{display:flex;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
     #reader .pages{padding:12px 14px;max-height:75vh;overflow:auto;display:flex;flex-direction:column;gap:10px;background:#0b0f15}
     #reader img{width:100%;height:auto;border-radius:8px;background:#0b0d10}
+    .wbar{display:flex;gap:8px;align-items:center;margin-left:auto}
   </style>
 </head>
 <body>
   <header>
     <div class="wrap">
-      <div class="logo">JM Reader</div>
-      <input id="q" class="input" placeholder="Cari manga… (contoh: One Piece)" />
+      <div class="logo">MD Reader</div>
+      <input id="q" class="input" placeholder="Cari manga di MangaDex…" />
       <button id="btnSearch" class="btn">Search</button>
-      <button id="btnTop" class="btn primary">Top</button>
+      <button id="btnTop" class="btn primary">Top (Followed)</button>
+      <select id="lang" class="btn" title="Bahasa chapter">
+        <option value="en" selected>EN</option>
+        <option value="id">ID</option>
+      </select>
     </div>
   </header>
 
   <div class="container">
-    <div class="hint">Klik kartu untuk membuka reader. Semua request MangaDex lewat proxy <code>/api/mangadex</code> (bypass blokir ISP).</div>
+    <div class="hint">Semua data dari <b>MangaDex</b> langsung. Gambar di-load lewat proxy <code>/api/mangadex</code> agar aman dari blokir ISP.</div>
     <div id="results" class="grid"></div>
     <div class="pagination" id="pager" style="display:none">
       <button class="btn" id="prev">‹ Prev</button>
@@ -53,7 +56,6 @@
     </div>
   </div>
 
-  <!-- Reader -->
   <dialog id="reader">
     <div class="head">
       <div id="rTitle" style="font-weight:800">Reader</div>
@@ -62,10 +64,12 @@
         <option value="id">ID</option>
       </select>
       <select id="rChapter" class="btn"></select>
-      <button id="rPrev" class="btn">‹ Prev</button>
-      <span class="hint" id="rInfo"></span>
-      <button id="rNext" class="btn">Next ›</button>
-      <button id="rClose" class="btn" style="margin-left:auto">Close</button>
+      <div class="wbar">
+        <button id="rPrev" class="btn">‹ Prev</button>
+        <span class="hint" id="rInfo"></span>
+        <button id="rNext" class="btn">Next ›</button>
+        <button id="rClose" class="btn">Close</button>
+      </div>
     </div>
     <div class="pages" id="rPages"></div>
   </dialog>
@@ -76,69 +80,72 @@
     const pager = el('#pager');
     const pageinfo = el('#pageinfo');
     const q = el('#q');
+    const prefLang = el('#lang');
 
-    let state = { mode:'top', page:1, lastResp:null, lastQuery:'', reader:{ mdMangaId:null, chapters:[], chapterIndex:0, lang:'en' } };
+    let state = { page:1, lastResp:null, lastQuery:'', items:[], reader:{ mangaId:null, chapters:[], chapterIndex:0 } };
 
-    async function jikan(url){
-      const res = await fetch(url);
-      if(!res.ok) throw new Error('HTTP '+res.status);
-      return res.json();
-    }
-    function renderList(payload){
-      const items = payload?.data || [];
-      state.lastResp = payload;
-      results.innerHTML = '';
-      if(!items.length){ results.innerHTML = '<div class="hint">Tidak ada hasil.</div>'; pager.style.display='none'; return; }
-      items.forEach(m=>{
-        const div = document.createElement('div');
-        div.className = 'card';
-        div.innerHTML = `
-          <img class="cover" src="${m.images?.jpg?.image_url || ''}" alt="cover"/>
-          <div class="title">${m.title || m.title_english || 'Untitled'}</div>`;
-        div.addEventListener('click', ()=> openReaderFromTitle(m.title || m.title_english || m.title_japanese || ''));
-        results.appendChild(div);
-      });
-      const { current_page, last_page } = payload?.pagination || {};
-      if(current_page && last_page){
-        pager.style.display='flex';
-        pageinfo.textContent = `Page ${current_page} / ${last_page}`;
-        el('#prev').disabled = current_page<=1;
-        el('#next').disabled = current_page>=last_page;
-      } else pager.style.display='none';
-    }
-    async function fetchTop(page=1){
-      state.mode='top'; state.page=page;
-      renderList({data:[]});
-      const url = new URL('https://api.jikan.moe/v4/top/manga');
-      url.searchParams.set('page', page);
-      try{ const data = await jikan(url.toString()); renderList(data); }catch(e){ results.innerHTML='<div class="hint">Gagal load top manga.</div>'; }
-    }
-    async function search(page=1){
-      state.mode='search'; state.page=page; state.lastQuery = q.value.trim();
-      if(!state.lastQuery){ return fetchTop(1); }
-      renderList({data:[]});
-      const url = new URL('https://api.jikan.moe/v4/manga');
-      url.searchParams.set('q', state.lastQuery);
-      url.searchParams.set('sfw', 'true');
-      url.searchParams.set('page', page);
-      url.searchParams.set('order_by','score');
-      url.searchParams.set('sort','desc');
-      try{ const data = await jikan(url.toString()); renderList(data); }catch(e){ results.innerHTML='<div class="hint">Gagal search.</div>'; }
-    }
-
+    // ===== MangaDex helpers via proxy =====
     async function mdGet(url){
       const res = await fetch('/api/mangadex?u='+encodeURIComponent(url));
       if(!res.ok) throw new Error('HTTP '+res.status);
       return res.json();
     }
-    async function mdSearchManga(title){
-      const u = 'https://api.mangadex.org/manga?title='+encodeURIComponent(title)+'&limit=5&order[relevance]=desc';
-      const d = await mdGet(u);
-      return d.data || [];
+    function pickTitle(attr){
+      return attr?.title?.en || attr?.title?.ja || Object.values(attr?.title||{})[0] || 'Untitled';
     }
-    async function mdGetChapters(mdMangaId, lang){
-      const u = `https://api.mangadex.org/chapter?manga=${mdMangaId}&translatedLanguage[]=${lang}&limit=100&order[chapter]=asc`;
-      const d = await mdGet(u);
+    function coverUrl(manga, coverAttr){
+      // uploads.mangadex.org/covers/{mangaId}/{fileName}.256.jpg (let original auto for now)
+      const file = coverAttr?.fileName;
+      return file ? `https://uploads.mangadex.org/covers/${manga.id}/${file}.256.jpg` : '';
+    }
+
+    async function listTop(page=1){
+      // Popular by followedCount desc, include cover_art to get filename
+      const url = `https://api.mangadex.org/manga?limit=24&offset=${(page-1)*24}&includes[]=cover_art&order[followedCount]=desc`;
+      const data = await mdGet(url);
+      state.lastResp = data;
+      renderCards(data.data);
+      updatePager(page, Math.ceil((data.total||page*24)/24));
+    }
+
+    async function searchMD(page=1){
+      const title = state.lastQuery.trim();
+      const url = `https://api.mangadex.org/manga?title=${encodeURIComponent(title)}&limit=24&offset=${(page-1)*24}&includes[]=cover_art&order[relevance]=desc`;
+      const data = await mdGet(url);
+      state.lastResp = data;
+      renderCards(data.data);
+      updatePager(page, Math.ceil((data.total||page*24)/24));
+    }
+
+    function renderCards(arr){
+      results.innerHTML = '';
+      if(!arr || !arr.length){ results.innerHTML = '<div class="hint">Tidak ada hasil.</div>'; pager.style.display='none'; return; }
+      arr.forEach(m=>{
+        const coverRel = (m.relationships||[]).find(r=>r.type==='cover_art');
+        const title = pickTitle(m.attributes);
+        const img = coverRel?.attributes ? coverUrl(m, coverRel.attributes) : '';
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <img class="cover" src="${img}" alt="${title}"/>
+          <div class="title">${title}</div>`;
+        card.addEventListener('click', ()=> openReaderForManga(m));
+        results.appendChild(card);
+      });
+    }
+
+    function updatePager(cp, last){
+      pager.style.display = 'flex';
+      pageinfo.textContent = `Page ${cp}`;
+      el('#prev').disabled = cp<=1;
+      el('#next').disabled = false;
+      state.page = cp;
+    }
+
+    // ===== Reader logic (all MD) =====
+    async function mdGetChapters(mangaId, lang){
+      const url = `https://api.mangadex.org/chapter?manga=${mangaId}&translatedLanguage[]=${lang}&limit=100&order[chapter]=asc`;
+      const d = await mdGet(url);
       return d.data || [];
     }
     async function mdChapterDetail(chId){ return (await mdGet(`https://api.mangadex.org/chapter/${chId}`)).data; }
@@ -155,23 +162,22 @@
       return files.map(f=> base + hash + '/' + f);
     }
 
-    async function openReaderFromTitle(title){
+    async function openReaderForManga(manga){
       try{
-        const found = await mdSearchManga(title);
-        if(!found.length) throw new Error('Manga tidak ditemukan di MangaDex');
-        const pick = found[0];
-        state.reader.mdMangaId = pick.id;
-        el('#rTitle').textContent = Object.values(pick.attributes?.title||{})[0] || title;
-
-        let lang = el('#rLang').value || 'en';
-        let chs = await mdGetChapters(state.reader.mdMangaId, lang);
+        const title = pickTitle(manga.attributes);
+        el('#rTitle').textContent = title;
+        state.reader.mangaId = manga.id;
+        // Ambil chapter sesuai bahasa UI (prefLang) dulu
+        let lang = prefLang.value;
+        let chs = await mdGetChapters(manga.id, lang);
         if(!chs.length){
           lang = (lang==='en') ? 'id' : 'en';
-          chs = await mdGetChapters(state.reader.mdMangaId, lang);
+          chs = await mdGetChapters(manga.id, lang);
           if(!chs.length) throw new Error('Chapter tidak tersedia (EN/ID)');
           el('#rLang').value = lang;
+        } else {
+          el('#rLang').value = lang;
         }
-        state.reader.lang = lang;
         state.reader.chapters = chs;
         const dd = el('#rChapter'); dd.innerHTML='';
         chs.forEach((c,i)=>{
@@ -181,19 +187,18 @@
           opt.value = String(i); opt.textContent = 'Ch '+num+t;
           dd.appendChild(opt);
         });
-        await openChapterIndex(0);
+        await openChapterIndex(0, true); // auto-skip empty
         el('#reader').showModal();
-      }catch(e){
-        alert('Gagal buka reader: '+e.message);
-      }
+      }catch(e){ alert('Gagal buka reader: '+e.message); }
     }
 
-    async function openChapterIndex(idx){
+    async function openChapterIndex(idx, allowSkip=false){
       state.reader.chapterIndex = idx;
       const ch = state.reader.chapters[idx];
       const pagesBox = el('#rPages'); pagesBox.innerHTML = '<div class="hint">Loading pages…</div>';
       try{
         const urls = await buildPageUrls(ch.id, true);
+        if(!urls.length) throw new Error('No page files found');
         pagesBox.innerHTML = '';
         urls.forEach((u,i)=>{
           const im = document.createElement('img');
@@ -202,23 +207,28 @@
         });
         el('#rInfo').textContent = 'Chapter '+(ch.attributes.chapter||'?')+' · '+urls.length+' pages';
       }catch(e){
-        pagesBox.innerHTML = '<div class="hint">Gagal load pages: '+e.message+'</div>';
+        if(allowSkip && idx < state.reader.chapters.length-1){
+          // auto skip to next chapter if no pages
+          openChapterIndex(idx+1, true);
+        } else {
+          pagesBox.innerHTML = '<div class="hint">Gagal load pages: '+e.message+'</div>';
+        }
       }
     }
 
-    el('#btnTop').addEventListener('click', ()=> fetchTop(1));
-    el('#btnSearch').addEventListener('click', ()=> search(1));
-    q.addEventListener('keydown', e=>{ if(e.key==='Enter') search(1); });
-    el('#prev').addEventListener('click', ()=>{ const cp=state.lastResp?.pagination?.current_page||1; if(cp>1){ state.mode==='top'?fetchTop(cp-1):search(cp-1); } });
-    el('#next').addEventListener('click', ()=>{ const cp=state.lastResp?.pagination?.current_page||1; const lp=state.lastResp?.pagination?.last_page||cp; if(cp<lp){ state.mode==='top'?fetchTop(cp+1):search(cp+1); } });
-
+    // UI events
+    el('#btnTop').addEventListener('click', ()=> listTop(1));
+    el('#btnSearch').addEventListener('click', ()=>{ state.lastQuery = q.value; searchMD(1); });
+    q.addEventListener('keydown', e=>{ if(e.key==='Enter'){ state.lastQuery=q.value; searchMD(1);} });
+    el('#prev').addEventListener('click', ()=>{ if(state.page>1){ const fn = state.lastQuery ? searchMD : listTop; fn(state.page-1); } });
+    el('#next').addEventListener('click', ()=>{ const fn = state.lastQuery ? searchMD : listTop; fn(state.page+1); });
     el('#rLang').addEventListener('change', async ()=>{
-      if(!state.reader.mdMangaId) return;
+      if(!state.reader.mangaId) return;
       const lang = el('#rLang').value;
       try{
-        const chs = await mdGetChapters(state.reader.mdMangaId, lang);
+        const chs = await mdGetChapters(state.reader.mangaId, lang);
         if(!chs.length) throw new Error('Chapter untuk bahasa ini tidak tersedia');
-        state.reader.lang = lang; state.reader.chapters = chs;
+        state.reader.chapters = chs;
         const dd = el('#rChapter'); dd.innerHTML='';
         chs.forEach((c,i)=>{
           const t = c.attributes.title ? ' · '+c.attributes.title : '';
@@ -227,15 +237,16 @@
           opt.value = String(i); opt.textContent = 'Ch '+num+t;
           dd.appendChild(opt);
         });
-        await openChapterIndex(0);
+        await openChapterIndex(0, true);
       }catch(e){ alert(e.message); }
     });
-    el('#rChapter').addEventListener('change', e=> openChapterIndex(parseInt(e.target.value,10)||0));
-    el('#rPrev').addEventListener('click', ()=>{ const i=state.reader.chapterIndex; if(i>0){ el('#rChapter').value=String(i-1); openChapterIndex(i-1); } });
-    el('#rNext').addEventListener('click', ()=>{ const i=state.reader.chapterIndex; if(i<state.reader.chapters.length-1){ el('#rChapter').value=String(i+1); openChapterIndex(i+1);} });
+    el('#rChapter').addEventListener('change', e=> openChapterIndex(parseInt(e.target.value,10)||0, false));
+    el('#rPrev').addEventListener('click', ()=>{ const i=state.reader.chapterIndex; if(i>0){ el('#rChapter').value=String(i-1); openChapterIndex(i-1);} });
+    el('#rNext').addEventListener('click', ()=>{ const i=state.reader.chapterIndex; if(i<state.reader.chapters.length-1){ el('#rChapter').value=String(i+1); openChapterIndex(i+1,true);} });
     el('#rClose').addEventListener('click', ()=> el('#reader').close());
 
-    fetchTop(1);
+    // initial
+    listTop(1);
   </script>
 </body>
 </html>
