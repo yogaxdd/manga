@@ -79,7 +79,6 @@
 
     let state = { mode:'top', page:1, lastResp:null, lastQuery:'', reader:{ mdMangaId:null, chapters:[], chapterIndex:0, lang:'en' } };
 
-    // ===== Jikan (metadata/search) =====
     async function jikan(url){
       const res = await fetch(url);
       if(!res.ok) throw new Error('HTTP '+res.status);
@@ -93,16 +92,16 @@
       items.forEach(m=>{
         const div = document.createElement('div');
         div.className = 'card';
-        div.innerHTML = \`
-          <img class="cover" src="\${m.images?.jpg?.image_url || ''}" alt="cover"/>
-          <div class="title">\${m.title || m.title_english || 'Untitled'}</div>\`;
+        div.innerHTML = `
+          <img class="cover" src="${m.images?.jpg?.image_url || ''}" alt="cover"/>
+          <div class="title">${m.title || m.title_english || 'Untitled'}</div>`;
         div.addEventListener('click', ()=> openReaderFromTitle(m.title || m.title_english || m.title_japanese || ''));
         results.appendChild(div);
       });
       const { current_page, last_page } = payload?.pagination || {};
       if(current_page && last_page){
         pager.style.display='flex';
-        pageinfo.textContent = \`Page \${current_page} / \${last_page}\`;
+        pageinfo.textContent = `Page ${current_page} / ${last_page}`;
         el('#prev').disabled = current_page<=1;
         el('#next').disabled = current_page>=last_page;
       } else pager.style.display='none';
@@ -127,7 +126,6 @@
       try{ const data = await jikan(url.toString()); renderList(data); }catch(e){ results.innerHTML='<div class="hint">Gagal search.</div>'; }
     }
 
-    // ===== MangaDex via proxy =====
     async function mdGet(url){
       const res = await fetch('/api/mangadex?u='+encodeURIComponent(url));
       if(!res.ok) throw new Error('HTTP '+res.status);
@@ -139,13 +137,12 @@
       return d.data || [];
     }
     async function mdGetChapters(mdMangaId, lang){
-      // Ambil banyak sekalian, urut naik
-      const u = \`https://api.mangadex.org/chapter?manga=\${mdMangaId}&translatedLanguage[]=\${lang}&limit=100&order[chapter]=asc\`;
+      const u = `https://api.mangadex.org/chapter?manga=${mdMangaId}&translatedLanguage[]=${lang}&limit=100&order[chapter]=asc`;
       const d = await mdGet(u);
       return d.data || [];
     }
-    async function mdChapterDetail(chId){ return (await mdGet(\`https://api.mangadex.org/chapter/\${chId}\`)).data; }
-    async function mdAtHome(chId){ return await mdGet(\`https://api.mangadex.org/at-home/server/\${chId}\`); }
+    async function mdChapterDetail(chId){ return (await mdGet(`https://api.mangadex.org/chapter/${chId}`)).data; }
+    async function mdAtHome(chId){ return await mdGet(`https://api.mangadex.org/at-home/server/${chId}`); }
 
     async function buildPageUrls(chId, preferSaver=true){
       const [detail, home] = await Promise.all([mdChapterDetail(chId), mdAtHome(chId)]);
@@ -158,18 +155,14 @@
       return files.map(f=> base + hash + '/' + f);
     }
 
-    // ===== Reader flow =====
     async function openReaderFromTitle(title){
       try{
-        // 1) Cari judul di MD
         const found = await mdSearchManga(title);
         if(!found.length) throw new Error('Manga tidak ditemukan di MangaDex');
-        // pilih kandidat pertama (sederhana)
         const pick = found[0];
         state.reader.mdMangaId = pick.id;
         el('#rTitle').textContent = Object.values(pick.attributes?.title||{})[0] || title;
 
-        // 2) Ambil chapters EN, fallback ID
         let lang = el('#rLang').value || 'en';
         let chs = await mdGetChapters(state.reader.mdMangaId, lang);
         if(!chs.length){
@@ -180,7 +173,6 @@
         }
         state.reader.lang = lang;
         state.reader.chapters = chs;
-        // isi dropdown chapter
         const dd = el('#rChapter'); dd.innerHTML='';
         chs.forEach((c,i)=>{
           const t = c.attributes.title ? ' · '+c.attributes.title : '';
@@ -214,7 +206,6 @@
       }
     }
 
-    // UI events
     el('#btnTop').addEventListener('click', ()=> fetchTop(1));
     el('#btnSearch').addEventListener('click', ()=> search(1));
     q.addEventListener('keydown', e=>{ if(e.key==='Enter') search(1); });
@@ -241,10 +232,9 @@
     });
     el('#rChapter').addEventListener('change', e=> openChapterIndex(parseInt(e.target.value,10)||0));
     el('#rPrev').addEventListener('click', ()=>{ const i=state.reader.chapterIndex; if(i>0){ el('#rChapter').value=String(i-1); openChapterIndex(i-1); } });
-    el('#rNext').addEventListener('click', ()=>{ const i=state.reader.chapterIndex; if(i<state.reader.chapters.length-1){ el('#rChapter').value=String(i+1); openChapterIndex(i+1); } });
+    el('#rNext').addEventListener('click', ()=>{ const i=state.reader.chapterIndex; if(i<state.reader.chapters.length-1){ el('#rChapter').value=String(i+1); openChapterIndex(i+1);} });
     el('#rClose').addEventListener('click', ()=> el('#reader').close());
 
-    // initial
     fetchTop(1);
   </script>
 </body>
