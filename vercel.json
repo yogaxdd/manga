@@ -1,12 +1,23 @@
-
 {
   "version": 2,
   "builds": [
-    { "src": "index.html", "use": "@vercel/static" },
-    { "src": "api/mangadex.js", "use": "@vercel/node" }
+    {
+      "src": "index.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "api/mangadex.js",
+      "use": "@vercel/node"
+    }
   ],
   "routes": [
-    { "src": "/", "dest": "/index.html" },
-    { "src": "/api/mangadex/(.*)", "dest": "/api/mangadex.js?path=$1" }
+    {
+      "src": "^/$",
+      "dest": "/index.html"
+    },
+    {
+      "src": "^/api/mangadex$",
+      "dest": "/api/mangadex.js"
+    }
   ]
 }
